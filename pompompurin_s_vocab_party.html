@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pompompurin's Vocabulary Party</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sanrio-yellow: #fef08a;
+            --sanrio-brown: #5d4037;
+            --sanrio-pink: #fbcfe8;
+            --sanrio-blue: #bfdbfe;
+            --sanrio-green: #bbf7d0;
+        }
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #fdf2f8; /* Soft pastel pink background */
+            touch-action: none; /* Prevent scrolling while playing on mobile */
+            overflow: hidden;
+        }
+
+        .title-font {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            height: 100vh;
+            max-height: 600px;
+            background: linear-gradient(to bottom, #bae6fd 0%, #e0f2fe 50%, #fef08a 100%);
+            position: relative;
+            overflow: hidden;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+
+        @media (min-width: 900px) {
+            body { display: flex; align-items: center; justify-content: center; height: 100vh; }
+            #game-container { height: 600px; }
+        }
+
+        /* Moving clouds background */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: drift linear infinite;
+        }
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+        .cloud::before { width: 50px; height: 50px; top: -20px; left: 10px; }
+        .cloud::after { width: 40px; height: 40px; top: -10px; right: 10px; }
+        @keyframes drift {
+            from { transform: translateX(100vw); }
+            to { transform: translateX(-200px); }
+        }
+
+        .lane-divider {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: repeating-linear-gradient(90deg, rgba(255,255,255,0.7) 0, rgba(255,255,255,0.7) 20px, transparent 20px, transparent 40px);
+            z-index: 10;
+        }
+
+        .word-box {
+            position: absolute;
+            background-color: white;
+            border: 4px solid #f472b6;
+            border-radius: 16px;
+            padding: 10px 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #374151;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transform: translateY(-50%);
+            white-space: nowrap;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #player {
+            position: absolute;
+            left: 5%;
+            width: 80px;
+            height: 80px;
+            transform: translateY(-50%);
+            transition: top 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 30;
+        }
+        
+        .purin-body {
+            position: absolute;
+            bottom: 0;
+            width: 80px;
+            height: 70px;
+            background-color: #fde047;
+            border: 3px solid #ca8a04;
+            border-radius: 40px 40px 30px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            animation: bounce 1s infinite alternate;
+        }
+
+        .purin-beret {
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 36px;
+            height: 16px;
+            background-color: #713f12;
+            border-radius: 50%;
+            z-index: 2;
+        }
+        
+        .purin-beret-top {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background-color: #713f12;
+            border-radius: 50%;
+        }
+
+        .purin-face {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .purin-eyes {
+            display: flex;
+            gap: 24px;
+        }
+
+        .purin-eye {
+            width: 8px;
+            height: 8px;
+            background-color: #3f2723;
+            border-radius: 50%;
+        }
+
+        .purin-mouth {
+            font-size: 14px;
+            line-height: 10px;
+            font-weight: bold;
+            color: #3f2723;
+        }
+
+        .purin-arm-left, .purin-arm-right {
+            position: absolute;
+            top: 40px;
+            width: 16px;
+            height: 20px;
+            background-color: #fde047;
+            border: 3px solid #ca8a04;
+            border-radius: 10px;
+        }
+        .purin-arm-left { left: -6px; transform: rotate(20deg); }
+        .purin-arm-right { right: -6px; transform: rotate(-20deg); }
+
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px); }
+        }
+
+        /* Screens and Overlays */
+        .screen-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .hidden { display: none !important; }
+
+        .btn {
+            background-color: #f472b6;
+            color: white;
+            padding: 12px 32px;
+            border-radius: 9999px;
+            font-size: 1.5rem;
+            font-family: 'Fredoka One', cursive;
+            border: 4px solid #db2777;
+            box-shadow: 0 6px 0 #be185d;
+            transition: all 0.1s;
+            cursor: pointer;
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #be185d;
+        }
+    </style>
+</head>
+<body class="w-full">
+
+    <div id="game-container">
+        
+        <!-- Background Decor -->
+        <div class="cloud" style="top: 10%; width: 100px; height: 30px; animation-duration: 20s; animation-delay: -5s;"></div>
+        <div class="cloud" style="top: 30%; width: 120px; height: 35px; animation-duration: 25s; animation-delay: -15s;"></div>
+        <div class="cloud" style="top: 60%; width: 80px; height: 25px; animation-duration: 18s; animation-delay: -2s;"></div>
+
+        <!-- HUD (Score and Question) -->
+        <div id="hud" class="absolute top-0 w-full p-4 flex flex-col items-center z-40 pointer-events-none hidden">
+            <div class="flex justify-between w-full px-4 mb-2">
+                <div class="bg-white px-4 py-2 rounded-2xl border-4 border-yellow-400 shadow-md">
+                    <span class="text-yellow-600 font-bold text-xl title-font">Score: <span id="score">0</span></span>
+                </div>
+            </div>
+            <div class="bg-white/90 px-6 py-3 rounded-3xl border-4 border-pink-400 shadow-lg max-w-[90%] text-center">
+                <h2 id="question-text" class="text-2xl md:text-3xl text-pink-600 title-font">Question goes here?</h2>
+            </div>
+        </div>
+
+        <!-- Touch Controls / Lane Click Areas -->
+        <div id="lane-0-click" class="absolute top-0 w-full h-[33.33%] z-30 cursor-pointer"></div>
+        <div id="lane-1-click" class="absolute top-[33.33%] w-full h-[33.33%] z-30 cursor-pointer"></div>
+        <div id="lane-2-click" class="absolute top-[66.66%] w-full h-[33.33%] z-30 cursor-pointer"></div>
+
+        <!-- Visual Lane Dividers -->
+        <div class="lane-divider" style="top: 33.33%;"></div>
+        <div class="lane-divider" style="top: 66.66%;"></div>
+
+        <!-- Game Elements Wrapper -->
+        <div id="game-world" class="hidden absolute inset-0">
+            <!-- Pompompurin Player -->
+            <div id="player">
+                <div class="purin-body">
+                    <div class="purin-beret-top"></div>
+                    <div class="purin-beret"></div>
+                    <div class="purin-face">
+                        <div class="purin-eyes">
+                            <div class="purin-eye"></div>
+                            <div class="purin-eye"></div>
+                        </div>
+                        <div class="purin-mouth">ω</div>
+                    </div>
+                    <div class="purin-arm-left"></div>
+                    <div class="purin-arm-right"></div>
+                </div>
+            </div>
+
+            <!-- Approaching Word Boxes Container -->
+            <div id="words-container"></div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen-overlay">
+            <div class="text-center mb-6">
+                <!-- Large Purin for Title -->
+                <div class="relative w-32 h-32 mx-auto mb-4">
+                    <div class="purin-body w-full h-[110px] left-0 bottom-0 border-[4px]">
+                        <div class="purin-beret-top w-4 h-4 top-[15px]"></div>
+                        <div class="purin-beret w-[50px] h-[22px] top-[-5px]"></div>
+                        <div class="purin-face mt-[40px]">
+                            <div class="purin-eyes gap-[36px]">
+                                <div class="purin-eye w-[10px] h-[10px]"></div>
+                                <div class="purin-eye w-[10px] h-[10px]"></div>
+                            </div>
+                            <div class="purin-mouth text-xl mt-1">ω</div>
+                        </div>
+                    </div>
+                </div>
+                <h1 class="text-4xl md:text-5xl text-pink-500 title-font mb-2 drop-shadow-md">Vocab Party!</h1>
+                <p class="text-lg text-gray-600 font-bold mb-8 max-w-md px-4">
+                    Help Pompompurin find the correct English words!<br>
+                    Use <span class="text-blue-500">Up/Down arrows</span> or <span class="text-blue-500">Tap</span> the lanes to move.
+                </p>
+                <button id="start-btn" class="btn">Play Now</button>
+            </div>
+        </div>
+
+        <!-- Feedback Overlay (Oops) -->
+        <div id="feedback-screen" class="absolute inset-0 flex items-center justify-center z-50 hidden bg-white/60 backdrop-blur-sm transition-opacity">
+            <div class="bg-white px-8 py-6 rounded-3xl border-4 border-yellow-400 shadow-2xl text-center transform scale-110">
+                <h2 id="feedback-text" class="text-4xl text-yellow-500 title-font mb-4">Oops!</h2>
+                <p class="text-xl text-gray-700 font-bold">Try again!</p>
+            </div>
+        </div>
+        
+        <!-- Winner Screen -->
+        <div id="win-screen" class="screen-overlay hidden">
+            <div class="text-center">
+                <h1 class="text-5xl text-pink-500 title-font mb-4">You Did It!</h1>
+                <p class="text-2xl text-gray-700 font-bold mb-4">Final Score: <span id="final-score" class="text-yellow-500"></span></p>
+                <p class="text-lg text-gray-500 mb-8">Pompompurin is so happy!</p>
+                <button id="restart-btn" class="btn">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Vocabulary Questions Data
+        const questions = [
+            { q: "Which word is a fruit?", correct: "Apple", wrong: ["Shoe", "Dog"] },
+            { q: "Find the opposite of BIG", correct: "Small", wrong: ["Fast", "Loud"] },
+            { q: "Which animal goes MEOW?", correct: "Cat", wrong: ["Bird", "Cow"] },
+            { q: "What color is the sun?", correct: "Yellow", wrong: ["Purple", "Blue"] },
+            { q: "Which one is a number?", correct: "Seven", wrong: ["Table", "Happy"] },
+            { q: "Opposite of HOT", correct: "Cold", wrong: ["Sun", "Fire"] },
+            { q: "Which is a shape?", correct: "Circle", wrong: ["Tree", "Apple"] },
+            { q: "What do you use to read?", correct: "Book", wrong: ["Spoon", "Shirt"] },
+            { q: "Which one can fly?", correct: "Bird", wrong: ["Fish", "Car"] },
+            { q: "Opposite of FAST", correct: "Slow", wrong: ["Run", "High"] }
+        ];
+
+        // Game State Variables
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isPlaying = false;
+        let playerLane = 1; // 0: Top, 1: Middle, 2: Bottom
+        let wordsX = 100; // Position in percentage
+        let speed = 0.4; // Movement speed
+        let animationFrameId;
+        let currentOptions = []; // The 3 words mapped to lanes
+        let pauseMovement = false;
+
+        // DOM Elements
+        const playerEl = document.getElementById('player');
+        const wordsContainer = document.getElementById('words-container');
+        const questionText = document.getElementById('question-text');
+        const scoreEl = document.getElementById('score');
+        const startScreen = document.getElementById('start-screen');
+        const gameWorld = document.getElementById('game-world');
+        const hud = document.getElementById('hud');
+        const feedbackScreen = document.getElementById('feedback-screen');
+        const winScreen = document.getElementById('win-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const feedbackText = document.getElementById('feedback-text');
+
+        // Audio Context setup
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            if (type === 'correct') {
+                // Happy chime sound
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'wrong') {
+                // Gentle bonk sound
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+                
+                gainNode.gain.setValueAtTime(0.4, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        function startGame() {
+            initAudio();
+            currentQuestionIndex = 0;
+            score = 0;
+            playerLane = 1; // Start in middle
+            speed = window.innerWidth < 600 ? 0.35 : 0.45; // slightly slower on mobile
+            updatePlayerPosition();
+            updateScoreDisplay();
+            
+            // Shuffle questions
+            questions.sort(() => Math.random() - 0.5);
+            
+            startScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            gameWorld.classList.remove('hidden');
+            hud.classList.remove('hidden');
+            
+            loadQuestion();
+            isPlaying = true;
+            pauseMovement = false;
+            gameLoop();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                endGame();
+                return;
+            }
+
+            const qData = questions[currentQuestionIndex];
+            questionText.innerText = qData.q;
+            
+            // Prepare answers and assign to random lanes (0, 1, 2)
+            let options = [qData.correct, qData.wrong[0], qData.wrong[1]];
+            options.sort(() => Math.random() - 0.5);
+            
+            currentOptions = options.map((word, index) => {
+                return {
+                    word: word,
+                    isCorrect: word === qData.correct,
+                    lane: index
+                };
+            });
+
+            // Render word boxes
+            wordsContainer.innerHTML = '';
+            currentOptions.forEach(opt => {
+                const el = document.createElement('div');
+                el.className = 'word-box';
+                el.innerText = opt.word;
+                // Calculate Top position based on lane
+                el.style.top = `${16.66 + (opt.lane * 33.33)}%`;
+                
+                // Color variations for fun
+                const colors = ['#fecaca', '#bbf7d0', '#bfdbfe'];
+                el.style.borderColor = colors[opt.lane];
+                el.style.backgroundColor = '#ffffff';
+
+                el.id = `word-lane-${opt.lane}`;
+                wordsContainer.appendChild(el);
+            });
+
+            wordsX = 100; // Start offscreen right
+            updateWordsPosition();
+        }
+
+        function updatePlayerPosition() {
+            // Calculate Top position: 16.66% (center of top third), 50% (middle), 83.33% (bottom)
+            const tops = [16.66, 50, 83.33];
+            playerEl.style.top = `${tops[playerLane]}%`;
+        }
+
+        function updateWordsPosition() {
+            const wordEls = wordsContainer.querySelectorAll('.word-box');
+            wordEls.forEach(el => {
+                el.style.left = `${wordsX}%`;
+            });
+        }
+
+        function updateScoreDisplay() {
+            scoreEl.innerText = score;
+            scoreEl.classList.add('scale-150', 'text-pink-500');
+            setTimeout(() => scoreEl.classList.remove('scale-150', 'text-pink-500'), 300);
+        }
+
+        function checkCollision() {
+            // Player is fixed around left: 5% to ~15%. 
+            // Words move from left 100% to 0%.
+            // Let's trigger collision when front of word reaches player's visual center (around 10%)
+            if (wordsX <= 12 && wordsX >= 5) {
+                // Determine which word is in the player's lane
+                const collidedOption = currentOptions.find(opt => opt.lane === playerLane);
+                
+                if (collidedOption) {
+                    pauseMovement = true; // Stop moving
+                    
+                    if (collidedOption.isCorrect) {
+                        handleCorrectAnswer();
+                    } else {
+                        handleWrongAnswer();
+                    }
+                }
+            } else if (wordsX < -20) {
+                // Words missed completely, just restart this question's approach
+                wordsX = 100;
+            }
+        }
+
+        function handleCorrectAnswer() {
+            playSound('correct');
+            score += 10;
+            updateScoreDisplay();
+            
+            // Visual flair on correct word
+            const correctEl = document.getElementById(`word-lane-${playerLane}`);
+            if (correctEl) {
+                correctEl.style.backgroundColor = '#bbf7d0'; // green
+                correctEl.style.transform = 'translateY(-50%) scale(1.2)';
+            }
+            
+            setTimeout(() => {
+                currentQuestionIndex++;
+                pauseMovement = false;
+                loadQuestion();
+            }, 800);
+        }
+
+        function handleWrongAnswer() {
+            playSound('wrong');
+            
+            const wrongEl = document.getElementById(`word-lane-${playerLane}`);
+            if (wrongEl) {
+                wrongEl.style.backgroundColor = '#fecaca'; // red
+            }
+
+            // Show Oops screen
+            feedbackScreen.classList.remove('hidden');
+            
+            setTimeout(() => {
+                feedbackScreen.classList.add('hidden');
+                // Push words back to right to try again
+                wordsX = 100; 
+                pauseMovement = false;
+            }, 1200);
+        }
+
+        function endGame() {
+            isPlaying = false;
+            gameWorld.classList.add('hidden');
+            hud.classList.add('hidden');
+            winScreen.classList.remove('hidden');
+            document.getElementById('final-score').innerText = score;
+        }
+
+        // Main game loop
+        function gameLoop() {
+            if (!isPlaying) return;
+            
+            if (!pauseMovement) {
+                wordsX -= speed;
+                updateWordsPosition();
+                checkCollision();
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+            if (e.key === 'ArrowUp') {
+                playerLane = Math.max(0, playerLane - 1);
+                updatePlayerPosition();
+            } else if (e.key === 'ArrowDown') {
+                playerLane = Math.min(2, playerLane + 1);
+                updatePlayerPosition();
+            }
+        });
+
+        // Touch / Click lane controls
+        document.getElementById('lane-0-click').addEventListener('pointerdown', () => {
+            if(!isPlaying) return; playerLane = 0; updatePlayerPosition();
+        });
+        document.getElementById('lane-1-click').addEventListener('pointerdown', () => {
+            if(!isPlaying) return; playerLane = 1; updatePlayerPosition();
+        });
+        document.getElementById('lane-2-click').addEventListener('pointerdown', () => {
+            if(!isPlaying) return; playerLane = 2; updatePlayerPosition();
+        });
+
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+    </script>
+</body>
+</html>
